@@ -20,6 +20,9 @@ from django.contrib.auth.views import LoginView
 from django.urls import path, include
 
 urlpatterns = [
+    path('admin/login/', LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('admin/', admin.site.urls),
     path('', include('assembly_learner.urls', namespace='assembly_learner')),
 ]
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+

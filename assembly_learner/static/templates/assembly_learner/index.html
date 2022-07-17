@@ -1,0 +1,21 @@
+{% extends 'assembly_learner/base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+    <div class="d-flex justify-content-center">
+        <img src="{% static 'assembly_learner/home-image.png' %}" alt="home image" style="max-height: 600px"></img>
+    </div>
+    <div class="d-flex justify-content-center">
+        <h1 class="text-sm-start text-center">Welcome to study of Expression of high-level language in Sigma 16
+            language.</h1>
+    </div>
+    <div class="d-flex justify-content-center">
+        {% for directory, display in directories.items %}
+            <a class="btn btn-link btn-lg" href="{% url 'assembly_learner:page' directory %}"
+               style="width: 160px;">
+                {{ display }}
+            </a>
+        {% endfor %}
+    </div>
+
+{% endblock content %}

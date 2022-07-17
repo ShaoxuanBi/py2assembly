@@ -1,0 +1,7 @@
+django
+pytest
+django-rest-framework
+attrs
+django-bootstrap5
+markdown
+pygments

@@ -1,0 +1,22 @@
+{% extends 'assembly_learner/base.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock head %}
+
+{% block content %}
+    <div class="card" style="margin: 20px">
+        <div class="card-body">
+            {{ rendered_html | safe }}
+        </div>
+    </div>
+    <div class="card" style="margin: 20px">
+        <div class="card-body">
+            <a class="btn btn-primary btn-lg" href="{% url 'assembly_learner:editor' 1 %}">
+                在编辑器中尝试
+            </a>
+        </div>
+    </div>
+{% endblock content %}

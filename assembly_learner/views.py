@@ -1,10 +1,13 @@
 # Create your views here.
+import traceback
 from pathlib import Path
 
 import markdown
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import Http404
 from django.views.generic import TemplateView
+
+from py2assembly import convert
 
 directory_map = {
     'assign': 'Assign',

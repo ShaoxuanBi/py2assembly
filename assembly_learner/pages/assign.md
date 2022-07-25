@@ -6,17 +6,3 @@ different types of assignment statements. The assigned "value" can be a number, 
 
 In assembly, for an initial value, it can be written directly in memory. For overwriting the value in memory, it is
 necessary to write from the register.
-
-Here is the python sample code:
-
-```python
-a = 123
-b = 136
-```
-
-Here is the assembly example code:
-
-```text
-a data 123
-b data 136
-```

@@ -230,17 +230,17 @@ class Converter:
         """对于if语句操作处理方法"""
         code = []
         extra = copy.copy(extra)
-        extra.if_true_label = f'true{obj.lineno}'
-        extra.if_done_label = f'done{obj.lineno}'
-        compare_code, compare_extra = Converter.convert_any(obj.test, extra)
-        code.extend(compare_code)
-        code.append(f'#label {extra.if_true_label}')
-        for i in obj.body:
+        extra.if_true_label = f'true{obj.lineno}'   # 声明当条件语句为true时，开始执行的位置标签
+        extra.if_done_label = f'done{obj.lineno}'   # 声明执行结束时的位置标签
+        compare_code, compare_extra = Converter.convert_any(obj.test, extra)   # 将测试代码解析
+        code.extend(compare_code)  # 对if的条件进行判断，如cmp R1,R2（比较x与y的大小）
+        code.append(f'#label {extra.if_true_label}')  # 将条件为真的label添加到自创的库里，如' jumpge skip[R0] '
+        for i in obj.body:   # 执行条件语句内的代码
             body_code, body_extra = Converter.convert_any(i, extra)
             code.extend(body_code)
         # 对于标签的处理，由于标签要写在下一行中，难以进行处理，因此在这里直接为标签另起一行，
         # 然后在全部处理完成的后处理阶段，再将标签写入下一行。
-        code.append(f'#label {extra.if_done_label}')
+        code.append(f'#label {extra.if_done_label}')  # 将结束时的label添加到自创的库里，如' done .....'
         return code, extra
 
     @staticmethod

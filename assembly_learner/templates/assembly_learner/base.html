@@ -14,7 +14,6 @@
         <link rel="stylesheet" href="{% static 'assembly_learner/pygments-styles.css' %}">
     {% endblock head %}
 </head>
-
 <body>
 {% block body %}
     <!-- The design of navigation:-->
@@ -22,7 +21,8 @@
         <!-- Foldout navigation with a dark background:-->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
-                <a class="navbar-brand" href="{% url 'assembly_learner:index' %}"><img  src="{% static 'assembly_learner/Logo3.png' %}" alt="Assembly Learner"></a>
+                <a class="navbar-brand" href="{% url 'assembly_learner:index' %}"><img
+                        src="{% static 'assembly_learner/Logo3.png' %}" alt="Assembly Learner"></a>
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                     </li>
@@ -30,7 +30,8 @@
 
 
                 <!-- Use flex container to set alignment on the main axis:-->
-                <div class="d-flex justify-content-start" role="search" style="position: absolute; width: 430px; left: 530px; top: 20px">
+                <div class="d-flex justify-content-start" role="search"
+                     style="position: absolute; width: 430px; left: 530px; top: 20px">
                     <!-- Design search box and search button:-->
                     <input class="form-control me-2" type="search" placeholder="Search....." aria-label="Search">
                     <button class="btn btn-outline-success" type="submit">Search</button>
@@ -58,7 +59,7 @@
 {% endblock body %}
 
 <!-- Fixed Java Script dynamic content:-->
-  <script  id="js" src="{% static 'assembly_learner/canvas-nest.min.js' %}" type="text/javascript"></script>
+<script id="js" src="{% static 'assembly_learner/canvas-nest.min.js' %}" type="text/javascript"></script>
 
 </body>
 </html>

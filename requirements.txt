@@ -5,3 +5,4 @@ attrs
 django-bootstrap5
 markdown
 pygments
+astunparse

@@ -17,6 +17,7 @@ directory_map = {
     'divide': 'Divide',
     'if': 'If',
     'if-else': 'If-Else',
+    'while': 'While Loop',
     'for': 'For Loop',
 }
 

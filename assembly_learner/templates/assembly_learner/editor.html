@@ -49,39 +49,38 @@
     </div>
 
     <script>
-        {# 首先将python代码从后端导进来，这里用的模板变量，直接读取了python中的python_code变量 #}
-        {# 这里用了 safe 过滤器，表示不对这一段内容进行转码，按原样保存 #}
-        {# 经过这一段的处理，我们就可以在javascript中读取到页面中要显示的python代码了 #}
+        {# Firstly, the python code is imported from the backend, the template variables are used here and the python_code variable in python is read directly #}
+        {# The safe filter is used here, which means that the content is not transcoded and is saved as is #}
+        {# After these steps, the python code to be displayed in the page can be read in javascript #}
         const pythonCode = `{{ python_code | safe }}`
-        {# 此处同理，读取 python 中的模板变量，也使用了 safe 过滤器，导入了汇编的代码 #}
+        {# The same as above, the safe filter is used to read the template variables in python, and the assembly code is imported #}
         const assemblyCode = `{{ assembly_code | safe }}`
-        {# 从html文档结构中取出了一个元素，这个元素将作为容器，承载这个编辑器 #}
+        {# An element is taken out of the html document structure which will act as a container to host this editor #}
         const pythonTextArea = document.querySelector('#python-code')
-        {# 创建一个 CodeMirror 对象，这个是调用的外部库，codemirror库，是一个功能非常强大的前端的编辑器 #}
-        {# 我们这个项目目前也就用到了其千分之一的功能吧 #}
-        {# 创建的时候指定这个 pythonTextArea ，也就是指定了将它放在页面的哪个位置 #}
+        {# Create a CodeMirror object, this is a call to an external library, the codemirror library, which is a very powerful front-end editor #}
+        {# Specify this pythonTextArea when create it, i.e. specify where to put it on the page #}
         const pythonEditor = CodeMirror.fromTextArea(pythonTextArea, {
             lineNumbers: true,
         });
-        {# 在编辑器中写入初始的 python 代码，这样我们在网页中打开这个页面的里面，编辑器里面就不是空的了 #}
+        {# Write the initial python code in the editor so that when we open the page in the web page, the editor is not empty #}
         pythonEditor.setValue(pythonCode)
-        {# 由于我们要同时显示 python 和汇编，因此要重复一次上面的工作，再创建一个编辑器 #}
+        {# Since I want to display both python and assembly, I have to repeat the above and create another editor #}
         const assemblyTextArea = document.querySelector('#assembly-code')
         const assemblyEditor = CodeMirror.fromTextArea(assemblyTextArea, {
             lineNumbers: true
         });
         assemblyEditor.setValue(assemblyCode);
         ([assemblyEditor, pythonEditor]).forEach(editor => {
-            {# 对这两个编辑器均进行一项设置，即大小，宽度方向自动调整，高度方向固定为800px #}
-            {# 使用 forEach 方法来实现，可以避免下面这行代码写两次 #}
+            {# Setting for both editors, i.e. size, width direction automatically adjusted, height direction fixed at 800px #}
+            {# This could be achieved by using the forEach method to avoid writing the following line of code twice #}
             editor.setSize('auto', '800px');
         })
-        {# 右面这个汇编代码的编辑窗口，我们事实上是仅用于显示的，因此设置其为只读，设置其不显示游标 #}
+        {# The editor window of the Sigma16 assembly code on the right is in fact for display only, so set it to read-only and set it not to display cursors #}
         assemblyEditor.setOption('readOnly', 'noCursor')
-        {# 定义一个回调事件，也就是点击提交之前，从 pythonEditor 中读取代码，并写入到一个 python-code-input 的元素中 #}
-        {# 点击这个 submit-button 之后，由于其是 submit 类型，因此会将表单 form 里面的所有 input 的数据全都传到服务器 #}
-        {# 这些数据里面就包括我们写入的这个 python-code-input 里面的 python 代码 #}
-        {# 这样就实现了将编辑后的 python 代码传回服务器进行下一步的处理 #}
+        {# Define a callback event, i.e. read the code from the pythonEditor and write it to a python-code-input element before clicking submit #}
+        {# When the submit-button is clicked, all the input data from the form will be passed to the server as it is a submit type #}
+        {# This data includes the python code that write to this python-code-input #}
+        {# This enables the edited python code to be passed back to the server for further processing #}
         const button = document.querySelector('#submit-button')
         button.onclick = () => {
             document.querySelector('#python-code-input').value = pythonEditor.getDoc().getValue()

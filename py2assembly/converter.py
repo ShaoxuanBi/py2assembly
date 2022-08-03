@@ -16,15 +16,15 @@ Finally, the rest of the code in this module translates what is obtained from ``
 The main method for code translation is ``py2assembly.converter.converter.assembly_code``.
 This method essentially calls ``py2assembly.converter.converter.convert_any``.
 
-在 ``convert_any`` 中，将各个 ``ast`` 的类的实例进行分配，按名称分配给不同的处理方法。
-例如，将 ``ast.BinOp`` 分配给了 ``py2assembly.converter.Converter.convert_binop`` 方法。
-``BinOp`` 标识的就是一个二元运算，在进行二元运算的时候，首先需要分别对左右的两个运算符进行处理。
-因此在 ``convert_binop`` 中，又分别对左右两个部分分别调用了相应的处理方法，
-然后再回到 ``convert_binop`` 中，对左右两部分的运算结果进行运算。
+In ``convert_any``, instances of every ``ast`` classes are assigned by name, to different operation methods.
+For example, assigning ``ast. BinOp`` to the ``py2assembly.converter.converter. convert_binop`` method.
+The ``BinOp`` identifies a binary operation, and when performing a binary operation, program needs to process the left and right operators separately firstly.
+So in ``convert_binop``, the corresponding methods are called on the left and right parts respectively.
+Then it goes back to ``convert_binop`` to perform the arithmetic on the left and right parts of the result.
 
-其余的语法模块都在下面有相应的详细解释，
+The rest of the syntax modules are explained in detail in every method.
 
-完成了全部的转换工作后，就得到了 ``sigma16`` 的代码。
+Once all the conversions have been done, the code for ``sigma16`` is obtained.
 """
 import ast
 import copy
@@ -37,51 +37,51 @@ import attrs
 
 
 @attrs.define(slots=True)
-class ExtraData:                                       # 用于声明各种附加参数（如：内存数据，寄存器等），以及对寄存器的判断使用
-    memory_data: Dict[str, int] = attrs.Factory(dict)  # 内存数据，分别是内存中的名称和初值
+class ExtraData:                                       # Used to declare various additional parameters (e.g. memory data, registers, etc.) and to determine whether the registers have been used
+    memory_data: Dict[str, int] = attrs.Factory(dict)  # memory data, respectively the name and initial value in memory
 
     locked_registers: Iterable[int] = ()
     """
-    在一些计算中，可能要锁定一些寄存器，以保存一些临时变量。
+    In some calculations, some registers may have to be locked to hold some temporary variables.
     """
 
     target_register: int = -1
     """
-    在一些操作中，可能需要指定计算后的结果写在哪个寄存器中，例如在进行连续运算的时候，
-    由于程序中没有分配一个内存单位，因此需要设置一个临时的寄存器用于表示结果，
-    而这个结果还将应用到后续的运算中。
-    默认值为-1，表示没有指定。
+    In some operations, it may be necessary to specify in which register the result of a calculation is written, for example when performing continuous operations.     
+    Since a unit of memory is not allocated in the program, it is necessary to set up a temporary register for representing the result 
+    and this result will also be applied to subsequent operations. 
+    The default value is -1, which means that it is not specified.
     """
 
     if_true_label: str = ''
     if_done_label: str = ''
     """
-    条件语句需要两个标签。
-    条件语句为真时，跳转到 ``if_true_label`` 的位置进行执行，然后再跳转到 ``if_done_label`` 结束；
-    条件语句为假时，不跳转，直接执行，然后再跳转 ``if_done_label`` 结束。
-    不需要设置一个 ``if_false_label`` ，因为语句为假时直接执行就可以。
+    Conditional statements require two labels.
+    When the conditional statement is true, it jumps to the ``if_true_label`` position for execution and then to the end of the ``if_done_label``.
+    If the conditional statement is false, it is executed without skipping, and then jumps to the end of ``if_done_label``.
+    There is no need to set an ``if_false_label``, since the statement is executed directly when it is false.
     """
 
     loop_start_label: str = ''
     """
-    循环语句需要三个标签。
-    判断为真时，跳转到 ``if_true_label`` 的位置进行执行，然后跳回 ``while_start_label``；
-    判断为假时，跳转到 ``if_done_label`` 结束循环。
+    The loop statement requires three labels. 
+    If the judgement is true, it jumps to ``if_true_label`` for execution and then jumps back to ``while_start_label``. 
+    If false, jump to ``if_done_label`` to end the loop.
     """
 
     def get_available_register(self):
-        """获取一个没有被锁，也没有指定为输出结果的寄存器。"""
+        """Get a register that is not locked and not specified as an output result"""
         for i in range(1, 15):
-            if i in self.locked_registers:   # 判断是否存在于被锁定的寄存器
+            if i in self.locked_registers:   # Judge whether the register is in the locked register
                 continue
-            if i == self.target_register:    # 判断是否存在于作为输出结果的寄存器
+            if i == self.target_register:    # Judge whether a register is present as the output result
                 continue
-            self.locked_registers = (*self.locked_registers, i)  # 当循环到能用的寄存器，则输出序列i
+            self.locked_registers = (*self.locked_registers, i)  # When the loop reaches a register that can be used, the sequence i is output
             return i
         else:
-            raise NotImplementedError('All registers are already in use.')  # 当检测到所有的寄存器都不可用时，报错'所有寄存器被使用的提示'
+            raise NotImplementedError('All registers are already in use.')  # Error reported 'All registers are used prompt' when all registers are detected as unavailable
 
-    def __add__(self, other: 'ExtraData'):   # 将所有的内存数据进行记录，不断地更新
+    def __add__(self, other: 'ExtraData'):   # Logging of all memory data, constantly updated
         return ExtraData(
             memory_data={**self.memory_data, **other.memory_data}
         )
@@ -117,11 +117,11 @@ class Converter:
     # and the output parameter is the list of converted strings and additional data
     @staticmethod
     def convert_module(obj: ast.Module, extra: ExtraData = None):
-        """自建的一个转换模型库，用于记录所有的转换"""
+        """A self-built library of conversion models to record all conversions"""
         code = []
-        extra = ExtraData()   # 建立两个空的数组，用于记录转换代码和附加参数
+        extra = ExtraData()   # Create two empty arrays to record the conversion code and additional parameters
 
-        for sub in obj.body:  # 遍历所有的需要被转换的对象，并将其添加到相应的数组中，便于记录
+        for sub in obj.body:  # Iterate through all the objects that need to be converted and add them to the appropriate arrays for easy documentation
             sub_code, sub_extra = Converter.convert_any(sub, extra)
             code.extend(sub_code)
             extra += sub_extra
@@ -136,25 +136,25 @@ class Converter:
         if extra.target_register == -1:
             extra.target_register = extra.get_available_register()
         left, op, right = obj.left, obj.op, obj.right         # Set objects between binary operator
-        if not isinstance(left, (ast.Name, ast.Constant)):    # 判断操作符左边的是否是变量名称或常量
+        if not isinstance(left, (ast.Name, ast.Constant)):    # Judge whether the left-hand side of an operator is a variable name or a constant
             raise NotImplementedError
-        if not isinstance(op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):  # 判断操作符是否是加减乘除里的符号
+        if not isinstance(op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):  # Judge whether an operator is a symbol in addition, subtraction, multiplication or division
             raise NotImplementedError
-        if not isinstance(right, (ast.Name, ast.Constant)):            # 判断操作符右边的是否是变量名称或常量
+        if not isinstance(right, (ast.Name, ast.Constant)):            # Judge whether the right-hand side of an operator is a variable name or a constant
             raise NotImplementedError
-        left_register, right_register = extra.get_available_register(), extra.get_available_register()   # 获取两个没有被使用的寄存器，储存左右两边的结果
+        left_register, right_register = extra.get_available_register(), extra.get_available_register()   # Get two registers that are not used to store the results of the left and right sides
 
-        if isinstance(left, ast.Name):     # 判断操作符左边是变量名称还是常量，如果是变量名称，用'load'把变量从内存复制到寄存器
+        if isinstance(left, ast.Name):     # Judge whether the left-hand side of the operator is a variable name or a constant; if it is a variable name, copy the variable from memory to a register with 'load'
             left_value = left.id
             left_command = 'load'
-        elif isinstance(left, ast.Constant):  # 如果是常量，则用'lea'将寄存器进行初始化值
+        elif isinstance(left, ast.Constant):  # If it is a constant, initialize the register a value with 'lea'
             left_value = left.value
             left_command = 'lea'
         else:
             raise NotImplementedError
-        code.append(Converter.comment(f'{left_command} R{left_register},{left_value}', obj))  # 最后，以汇编语句的形式记录在自建的库里进行保存, 如 ' load R1,a[R0]  ；R1 ：= a '
+        code.append(Converter.comment(f'{left_command} R{left_register},{left_value}', obj))  # Finally, it is recorded as the form of Sigma 16 assembly statement and stored in a self-built library, e.g. ' load R1,a[R0]  ；R1 ：= a '
 
-        if isinstance(right, ast.Name):   # 对于右边的判断与左边的一样
+        if isinstance(right, ast.Name):   # For the right side, the same judgement as for the left side
             right_value = right.id
             right_command = 'load'
         elif isinstance(right, ast.Constant):
@@ -164,7 +164,7 @@ class Converter:
             raise NotImplementedError
         code.append(Converter.comment(f'{right_command} R{right_register},{right_value}', obj))
 
-        if isinstance(op, ast.Add):   # 判断操作符是加法，减法，乘法，除法之中的哪一个
+        if isinstance(op, ast.Add):   # Determine which of addition, subtraction, multiplication or division the operator is
             operator = 'add'
         elif isinstance(op, ast.Sub):
             operator = 'sub'
@@ -175,17 +175,17 @@ class Converter:
         else:
             raise NotImplementedError
         code.append(Converter.comment(f'{operator} R{extra.target_register},R{left_register},R{right_register}', obj))
-        return code, extra                                       # 最后，以汇编语句的形式记录在自建的库里进行保存，如' add R3,R1,R2 '
+        return code, extra            # Finally, it is recorded as the form of Sigma 16 assembly statement and stored in a self-built library, e.g.' add R3,R1,R2 '
 
     @staticmethod
     def convert_compare(obj: ast.Compare, extra: ExtraData = None):
-        """对于比较运算符操作的处理方法"""
+        """Handling method of comparison operations"""
         extra = copy.copy(extra)
         code = []
         left_register = extra.get_available_register()
         right_register = extra.get_available_register()
 
-        # 处理比较符号的左边
+        # Handles the left side of the comparison symbol
         if isinstance(obj.left, ast.Name):
             code.append(f'load R{left_register},{obj.left.id}')
         elif isinstance(obj.left, ast.Constant):
@@ -193,8 +193,8 @@ class Converter:
         else:
             raise NotImplementedError(type(obj.left))
 
-        # 处理比较符号的右边
-        if len(obj.comparators) != 1:   # 首先需要判断判断符号的个数，只能等于1，才能继续操作
+        # Handles the right side of the comparison symbol
+        if len(obj.comparators) != 1:   # The first step is to judge the number of symbols, which can only be equal to 1, in order to continue the operation
             raise ValueError(f'Only support 1 operator, not "{obj.ops}".')
         comparator = obj.comparators[0]
         if isinstance(comparator, ast.Name):
@@ -204,13 +204,13 @@ class Converter:
         else:
             raise NotImplementedError(type(obj.comparators))
 
-        code.append(f'cmp R{left_register},R{right_register}')  # 最后，以汇编语句的形式记录在自建的库里进行保存，如 'cmp R5,R8'
+        code.append(f'cmp R{left_register},R{right_register}')  # Finally, it is recorded as the form of Sigma 16 assembly statement and stored in a self-built library, e.g. 'cmp R5,R8'
 
-        # 处理比较符号
+        # Handling comparison symbols
         if len(obj.ops) != 1:
             raise ValueError(f'Only support 1 operator, not "{obj.ops}".')
         op = obj.ops[0]
-        if isinstance(op, ast.Gt):  # 判断四种比较符号（>, >=, <. <=）
+        if isinstance(op, ast.Gt):  # Judge the four comparison symbols (>, >=, <. <=)
             code.append(f'jumpgt {extra.if_true_label}')
         elif isinstance(op, ast.GtE):
             code.append(f'jumpge {extra.if_true_label}')
@@ -220,67 +220,67 @@ class Converter:
             code.append(f'jumple {extra.if_true_label}')
         else:
             raise NotImplementedError(type(op))
-        # 这里不需要定义 false 的标签，因为如果判断失败则直接执行下面的内容，也就是默认走 false
-        code.append(f'jump {extra.if_done_label}')  # false的时候，直接结束循环
+        # It is not necessary to define a false tag here, because if it fails, the following is executed directly, i.e. the default is false
+        code.append(f'jump {extra.if_done_label}')  # If false, the loop ends directly
 
         return code, extra
 
     @staticmethod
     def convert_if(obj: ast.If, extra: ExtraData = None):
-        """对于if语句操作处理方法"""
+        """Handling method of IF statements"""
         code = []
         extra = copy.copy(extra)
-        extra.if_true_label = f'true{obj.lineno}'   # 声明当条件语句为true时，开始执行的位置标签
-        extra.if_done_label = f'done{obj.lineno}'   # 声明执行结束时的位置标签
-        compare_code, compare_extra = Converter.convert_any(obj.test, extra)   # 将测试代码解析
-        code.extend(compare_code)  # 对if的条件进行判断，如cmp R1,R2（比较x与y的大小）
-        code.append(f'#label {extra.if_true_label}')  # 将条件为真的label添加到自创的库里，如' jumpge skip[R0] '
-        for i in obj.body:   # 执行条件语句内的代码
+        extra.if_true_label = f'true{obj.lineno}'   # Declare the position label to start execution when the conditional statement is true
+        extra.if_done_label = f'done{obj.lineno}'   # Declare the end of execution position label
+        compare_code, compare_extra = Converter.convert_any(obj.test, extra)   # Parse the test code
+        code.extend(compare_code)  # Judgement on the condition of if, e.g. cmp R1,R2 (compare the magnitude of x and y)
+        code.append(f'#label {extra.if_true_label}')  # Add the true label to a self-created library, e.g.' jumpge skip[R0] '
+        for i in obj.body:   # Execute the code inside the conditional statement
             body_code, body_extra = Converter.convert_any(i, extra)
             code.extend(body_code)
-        # 对于标签的处理，由于标签要写在下一行中，难以进行处理，因此在这里直接为标签另起一行，
-        # 然后在全部处理完成的后处理阶段，再将标签写入下一行。
-        code.append(f'#label {extra.if_done_label}')  # 将结束时的label添加到自创的库里，如' done .....'
+        # For the handling of labels, it is difficult to process them as labels have to be written on the next line, so here labels are directly on a separate line for the label
+        # The label is then written to the next line after all the processing is complete
+        code.append(f'#label {extra.if_done_label}')  # Add the ending label to a self-created library, e.g.' done ....'
         return code, extra
 
     @staticmethod
     def convert_assign(obj: ast.Assign, extra: ExtraData = None):
-        """对于赋值语法操作处理方法"""
+        """Handling method of assignment syntax operations"""
         code = []
 
         if extra is None:
             extra = ExtraData()
 
-        # 将目标对象放入列表进行检查
+        # Put the target object in the list for inspection
         targets: List[ast.Name] = obj.targets
         for i in targets:
-            if not isinstance(i, ast.Name):  # 判断是否是变量名称
+            if not isinstance(i, ast.Name):  # Determine if it is a variable name
                 raise NotImplementedError
         left_values = [i.id for i in targets]
         right_value = obj.value
 
-        # 如果右值为常量，则判断是否是初值，如果是初值则使用data，否则使用语句
+        # If the right value is a constant, determine if it is the initial value, if it is the initial value use 'data', otherwise use the statement
         if isinstance(right_value, ast.Constant):
             constant = right_value.value
 
-            # 目前仅支持处理右值为整数的语句
+            # Only statements with integer values are currently supported for right hand
             if not isinstance(right_value.value, int):
                 raise NotImplementedError
 
-            # 对于常量，如果命名不存在，则直接写入内存作为初值；如果命名已存在，则覆盖内存中的值
+            # For constants, if the name does not exist, it is written directly to memory as the initial value; if the name already exists, it overwrites the value in memory
             for variable_name in left_values:
                 if variable_name in extra.memory_data:
                     code.append(Converter.comment(f'lea R1,{constant}', obj))
-                    code.append(Converter.comment(f'store R1,{variable_name}', obj))  # 以汇编语句的形式记录在自建的库里进行保存，如 'store R1, R[R0]'
+                    code.append(Converter.comment(f'store R1,{variable_name}', obj))  # Finally, it is recorded as the form of Sigma 16 assembly statement and stored in a self-built library, e.g. 'store R1, R[R0]'
                 else:
                     extra.memory_data[variable_name] = constant
 
-        # 如果右值为表达式，则对右值调用表达式的解析方法，然后将过计算结果赋值给各个左值的内存位置
+        # If the right value is an expression, the expression's parsing method is called for the right value and the result of the calculation is then assigned to the memory location of each left value
         elif isinstance(right_value, ast.BinOp):
-            sub_code, sub_extra = Converter.convert_binop(right_value, extra)  # 如 'add R5,R3,R4(R5 = (a+b)+c)'
+            sub_code, sub_extra = Converter.convert_binop(right_value, extra)  # Eg 'add R5,R3,R4(R5 = (a+b)+c)'
             code.extend(sub_code)
             for variable_name in left_values:
-                code.append(Converter.comment(f'store R{sub_extra.target_register},{variable_name}', obj))    # 则' store R5,x[R0]（x := a+b+c）'
+                code.append(Converter.comment(f'store R{sub_extra.target_register},{variable_name}', obj))    # ' store R5,x[R0]（x := a+b+c）'
                 extra.memory_data.setdefault(variable_name, 0)
         else:
             raise NotImplementedError
@@ -289,6 +289,25 @@ class Converter:
 
     @staticmethod
     def convert_while(obj: ast.While, extra: ExtraData = None):
+        """Handling method of while statement operations"""
+        # The handling of the while statement could be summarized to the following program logic
+        # The loop structure consists of two main elements: the judgement, and the loop body
+        # If the judgement is true, the body of the loop is executed; if the judgement is false, the loop structure is jumped out
+        # So the loop content could be summarized as follows:
+        #   Judgement
+        #   Judgement is true: jump to the loop body and, after executing the loop body, jump to the start
+        #   Judgement is false: jump to the end of the loop body
+        # With the introduction of the label, the logic could be summarized as follows:
+        #   Label: start of the loop structure
+        #   Judgement
+        #   True result jumps to: the body of the loop
+        #   Jump to: the end of the loop structure (if the statement is executed without a jump, the judgement is false)
+        #   Label: the body of the loop
+        #   Statement of the loop body
+        #   Statement of the loop body
+        #   Statement of the loop body
+        #   Jump to: start of the loop structure
+        #   Label: end of loop structure
         code = []
         extra = ExtraData() if extra is None else copy.deepcopy(extra)
         extra.loop_start_label = f'loop{obj.lineno}'
@@ -308,6 +327,11 @@ class Converter:
 
     @staticmethod
     def convert_for(obj: ast.For, extra: ExtraData = None):
+        """Handling method of For statement operations"""
+        # The for statement is essentially a syntax of the while statement, and all for statements could be implemented with While statements essentially
+        # So this algorithm method treats the For statement by converting it to a While statement
+        # In fact, it is a python code manipulation that converts the original for loop python code into a while loop python code
+        # Python code is then given to the compiler to process through the while statement method
         code = []
         extra = ExtraData() if extra is None else copy.deepcopy(extra)
         if isinstance(obj.iter, ast.Call) and obj.iter.func.id == 'range':
@@ -318,6 +342,8 @@ class Converter:
             target = obj.target.id
             while_code = f'''{target} = {start}\nwhile {target} < {end}:\n    {target} = {target} + 1'''
             while_code = ast.parse(while_code)
+            # When the For statement is converted to While statement, it is in fact converted to two syntactic constructs: an assignment statement and the while statement that follows
+            # Here the compile function is called on each of the two parts, and the compiled assembly code is then aggregated and returned as the assembly code for the For statement
             assign_obj, while_obj = while_code.body
             assign_obj: ast.Assign
             while_obj: ast.While
@@ -336,11 +362,11 @@ class Converter:
 
     @staticmethod
     def convert_any(obj, extra: ExtraData = None) -> (List[str], ExtraData):
-        type_name = type(obj).__name__.lower()     # 将所有ast的实例进行分类
-        method_name = f'convert_{type_name}'       # 按名称分配给不同的处理方法
-        if not hasattr(Converter, method_name):    # hasattr() 函数用于判断ast的实例对象是否包含对应的方法名称
-            raise TypeError(f'No convert method {method_name}')  # 报错没有此转换方法的提示
-        return getattr(Converter, method_name)(obj, extra)       # getattr() 函数返回一个方法名称属性值
+        type_name = type(obj).__name__.lower()     # Sorting all instances of ast
+        method_name = f'convert_{type_name}'       # Assign to different handing methods by name
+        if not hasattr(Converter, method_name):    # The hasattr() function is used to determine whether the instance object of ast contains the corresponding method name
+            raise TypeError(f'No convert method {method_name}')  # Report error 'without this conversion method'
+        return getattr(Converter, method_name)(obj, extra)       # The getattr() function returns a method name attribute value
 
     _method_map: Dict[Type, Callable] = {
         ast.Module: convert_module,
@@ -350,12 +376,21 @@ class Converter:
     @cached_property
     def assembly_code(self):
         """"The main method for code translation"""
-        code, extra = self.convert_any(self.ast_tree)  #将由源代码解析之后变成的语法树作为参数，分配不同的方法
+        # Parsing the AST syntax tree to get the parsed code, and some procedural content after parsing
+        # The code parsed at this point is still an incomplete code, containing some custom instructions, which need to be transformed to get the final assembly code
+        # The extra includes some additional properties, such as which memory variables are used
+        code, extra = self.convert_any(self.ast_tree)
         extra: ExtraData
-        code.append(Converter.comment('trap R0,R0,R0', comment='stop program'))  # 在每个方法结尾处，添加这一行注释，表示翻译结束
+        # Assembly programs need an explicit end-of-program statement, otherwise the program will keep running all the time
+        code.append(Converter.comment('trap R0,R0,R0', comment='stop program'))
         temp = []
         label = ''
+        # Handling of predefined instructions
         for i in code:
+            # During processing, the label instruction is defined
+            # The purpose of this instruction is that label is often used to indicate an end-of-execution position, but the end-of-execution position is the next assembly statement
+            # When processing, it is difficult to apply to the next ast structure because the individual python statements are processed independently by the ast
+            # Therefore, this predefined label instruction is used for recording, which is then added to the latter assembly statement in the post-processing phase
             match = re.match(r'^#label (.*?)(; .*?)?$', i)
             if match:
                 label = match.group(1)
@@ -365,6 +400,10 @@ class Converter:
                 label = ''
         code = temp
         code.append('')
+        # The process of converting python to assembly language, the definition of variable names is different
+        # In python, variable names could be defined when they are used anytime, whereas in assembly, variable names must be fully defined at the beginning
+        # During the processing of AST, for similar reasons as above, it is difficult to specify variable names into the final memory during processing, so Extra is used for this purpose
+        # Processing could be done using predefined instructions, and then the first assignment instruction is specified as the initial variable name in the post-processing stage
         code.extend(Converter.comment(f'{k} data {v}', indent=-20, comment='initial value')
                     for k, v in extra.memory_data.items())
         return '\n'.join(code)

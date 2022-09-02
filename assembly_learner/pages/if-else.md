@@ -1,0 +1,3 @@
+# If-else Function
+
+In Python, the if-else function is a conditional statement. Depending on the true or false value of the logical condition, it returns the corresponding content. However, in assembly language, the if-else condition function requires a corresponding label to complete the jump. Among them, all operations are performed in registers, the value of the variable is stored in a register using the instruction "load", the value of the variable is assigned using the instruction "lea" and the value of the register give to the variable using the instruction "store".The instruction "jump" is used to jump to the corresponding label, and the instruction "cmp" is used to compare within the condition

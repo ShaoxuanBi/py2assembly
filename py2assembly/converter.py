@@ -117,7 +117,7 @@ class Converter:
     # and the output parameter is the list of converted strings and additional data
     @staticmethod
     def convert_module(obj: ast.Module, extra: ExtraData = None):
-        """A self-built library of conversion models to record all conversions"""
+        """A self-constructed conversion module to temporarily store objects which need to be converted"""
         code = []
         extra = ExtraData()   # Create two empty arrays to record the conversion code and additional parameters
 
@@ -130,7 +130,7 @@ class Converter:
 
     @staticmethod
     def convert_binop(obj: ast.BinOp, extra: ExtraData = None):
-        """"对于二元运算操作（+，-，*，/）的处理方法"""
+        """"Handling method of binary operations (+, -, *, /)"""
         code = []
         extra = copy.copy(extra)
         if extra.target_register == -1:
@@ -373,12 +373,12 @@ class Converter:
         ast.Assign: convert_assign,
     }
 
+    # Parsing the AST syntax tree to get the parsed code, and some procedural content after parsing
+    # The code parsed at this point is still an incomplete code, containing some custom instructions, which need to be transformed to get the final assembly code
+    # The extra includes some additional properties, such as which memory variables are used
     @cached_property
     def assembly_code(self):
         """"The main method for code translation"""
-        # Parsing the AST syntax tree to get the parsed code, and some procedural content after parsing
-        # The code parsed at this point is still an incomplete code, containing some custom instructions, which need to be transformed to get the final assembly code
-        # The extra includes some additional properties, such as which memory variables are used
         code, extra = self.convert_any(self.ast_tree)
         extra: ExtraData
         # Assembly programs need an explicit end-of-program statement, otherwise the program will keep running all the time

@@ -1,4 +1,4 @@
-# Add
+# Addition
 
 The process of assigning a value to a variable is called assignment. A statement that assigns a certain value to a
 variable is called an assignment statement. Each programming language has its own assignment statement, and there are

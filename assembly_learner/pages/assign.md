@@ -1,8 +1,4 @@
 # Assign
 
-The process of assigning a value to a variable is called assignment. A statement that assigns a certain value to a
-variable is called an assignment statement. Each programming language has its own assignment statement, and there are
-different types of assignment statements. The assigned "value" can be a number, a string or an expression.
-
-In assembly, for an initial value, it can be written directly in memory. For overwriting the value in memory, it is
-necessary to write from the register.
+The process of assigning a value to a variable is called an assignment. A statement that assigns a certain value to a variable is called an assignment statement. Where the "value" may be a number, a string or an expression.
+Assignment is the most basic operation in the syntax, and in high-level programming languages it is directly represented by the symbol "=". However, in the Sigma 16 assembly language,  it is represented using the instruction "data". Among them, all operations are performed in registers, the value of the variable is stored in a register using the instruction "load", the value of the variable is assigned using the instruction "lea" and the value of the register give to the variable using the instruction "store".

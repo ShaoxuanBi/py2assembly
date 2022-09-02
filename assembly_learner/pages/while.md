@@ -1,4 +1,3 @@
-# While Loop
+# While Loop Function
 
-xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx
-xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx 
+In Python, while is a loop function. When the condition is satisfied, it enters the loop and executes the contents of the loop body. If the condition is not met after entering the loop, the loop is jumped out. However, in assembly language, the while loop function also requires a corresponding label to complete the jump. Among them, all operations are performed in registers, the value of the variable is stored in a register using the instruction "load", the value of the variable is assigned using the instruction "lea" and the value of the register give to the variable using the instruction "store".The instruction "jump" is used to jump to the corresponding label, and the instruction "cmp" is used to compare within the condition

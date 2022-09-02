@@ -1,4 +1,3 @@
-# For
+# For Loop Function
 
-xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx
-xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx 
+In Python, for is a loop function, and a loop statement consists of a loop body and the conditions. The for loop is actually syntactic sugar of the while loop. If the condition is not met after entering the loop, the loop is jumped out. However, in assembly language, the for loop function also requires a corresponding label to complete the jump. Among them, all operations are performed in registers, the value of the variable is stored in a register using the instruction "load", the value of the variable is assigned using the instruction "lea" and the value of the register give to the variable using the instruction "store".The instruction "jump" is used to jump to the corresponding label, and the instruction "cmp" is used to compare within the condition
